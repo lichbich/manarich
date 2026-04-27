@@ -136,6 +136,45 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
+app.put('/api/users/:id/profile', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { username, password, avatarUrl } = req.body;
+    
+    const snapshot = await db.ref('richsoon_users').get();
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      if (username) {
+        const existingUser = Object.values(data).find(u => u.username === username && u.id !== id);
+        if (existingUser) {
+          return res.status(400).json({ error: 'Username already exists' });
+        }
+      }
+    }
+    
+    const userRef = db.ref(`richsoon_users/${id}`);
+    const userSnap = await userRef.get();
+    if (!userSnap.exists()) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    const updates = {};
+    if (username) updates.username = username;
+    if (password) updates.password = password;
+    if (avatarUrl !== undefined) updates.avatarUrl = avatarUrl;
+    
+    await userRef.update(updates);
+    
+    // Fetch updated user to return
+    const updatedSnap = await userRef.get();
+    const { password: _, ...userWithoutPassword } = updatedSnap.val();
+    
+    res.json({ success: true, user: userWithoutPassword });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.put('/api/users/:id/role', async (req, res) => {
   try {
     const { id } = req.params;
