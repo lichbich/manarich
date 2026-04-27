@@ -232,6 +232,35 @@ app.get('/api/books', async (req, res) => {
   }
 });
 
+app.post('/api/books/bulk', async (req, res) => {
+  try {
+    const { books } = req.body;
+    if (!Array.isArray(books)) return res.status(400).json({ error: 'Books must be an array' });
+    
+    const results = [];
+    const updates = {};
+    
+    books.forEach(b => {
+      const newBookRef = db.ref('richsoon_books').push();
+      const book = { 
+        id: newBookRef.key, 
+        title: b.title, 
+        author: b.author || "", 
+        link: b.link, 
+        price: Number(b.price), 
+        assignedUsers: b.assignedUsers || [] 
+      };
+      updates[`richsoon_books/${newBookRef.key}`] = book;
+      results.push(book);
+    });
+    
+    await db.ref().update(updates);
+    res.status(201).json({ success: true, count: results.length });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/books', async (req, res) => {
   try {
     const { title, author, link, price, assignedUsers } = req.body;
