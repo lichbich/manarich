@@ -5,9 +5,18 @@ import { readFileSync, existsSync } from 'fs';
 
 // Initialize Firebase Admin
 let serviceAccount = null;
-if (existsSync('./serviceAccountKey.json')) {
+
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  try {
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    console.log("Loaded Firebase credentials from Environment Variables.");
+  } catch (e) {
+    console.error("Error parsing FIREBASE_SERVICE_ACCOUNT env var:", e.message);
+  }
+} else if (existsSync('./serviceAccountKey.json')) {
   try {
     serviceAccount = JSON.parse(readFileSync('./serviceAccountKey.json', 'utf8'));
+    console.log("Loaded Firebase credentials from local file.");
   } catch (e) {
     console.error("Error reading serviceAccountKey.json:", e);
   }
