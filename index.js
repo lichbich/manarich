@@ -261,6 +261,23 @@ app.post('/api/books/bulk', async (req, res) => {
   }
 });
 
+app.post('/api/books/delete-bulk', async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) return res.status(400).json({ error: 'IDs must be an array' });
+    
+    const updates = {};
+    ids.forEach(id => {
+      updates[`richsoon_books/${id}`] = null;
+    });
+    
+    await db.ref().update(updates);
+    res.json({ success: true, count: ids.length });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/books', async (req, res) => {
   try {
     const { title, author, link, price, assignedUsers } = req.body;
